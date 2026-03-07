@@ -39,15 +39,10 @@ def add_new_movie(title, year, rating):
     """
     with engine.connect() as connection:
         try:
-            result = connection.execute(text("INSERT OR IGNORE INTO movies (title, year, rating) "
+            connection.execute(text("INSERT OR IGNORE INTO movies (title, year, rating) "
                                              "VALUES (:title, :year, :rating)"),
                                {"title": title, "year": year, "rating": rating})
             connection.commit()
-            rows_changed = result.rowcount
-            if rows_changed > 0:
-                print(f"Movie '{title}' successfully added.")
-            else:
-                print(f"Movie '{title}' already exists.")
         except Exception as e:
             print(f"Error: {e}")
 
@@ -59,13 +54,8 @@ def delete_existing_movie(title):
     """
     with engine.connect() as connection:
         try:
-            result = connection.execute(text("DELETE FROM movies WHERE title = :title"), {"title": title})
+            connection.execute(text("DELETE FROM movies WHERE title = :title"), {"title": title})
             connection.commit()
-            rows_changed = result.rowcount
-            if rows_changed > 0:
-                print(f"Movie '{title}' successfully deleted.")
-            else:
-                print(f"No movie '{title}' found.")
         except Exception as e:
             print(f"Error: {e}")
 
@@ -78,23 +68,8 @@ def update_existing_movie(title, rating):
     """
     with engine.connect() as connection:
         try:
-            result = connection.execute(text("UPDATE movies SET rating = :rating WHERE title = :title"),
+            connection.execute(text("UPDATE movies SET rating = :rating WHERE title = :title"),
                                         {"title": title, "rating": rating})
             connection.commit()
-            rows_changed = result.rowcount
-            if rows_changed > 0:
-                print(f"Movie '{title}' successfully updated.")
-            else:
-                print(f"No movie '{title}' found.")
         except Exception as e:
             print(f"Error: {e}")
-
-print(get_movies())
-add_new_movie("Inception", 2010, 8.8)
-add_new_movie("Test", 2010, 8.8)
-print(get_movies())
-update_existing_movie("Inception", 5.5)
-print(get_movies())
-delete_existing_movie("Inception")
-delete_existing_movie("Test")
-print(get_movies())
