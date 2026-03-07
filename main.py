@@ -1,4 +1,5 @@
-from movie_storage_sql import get_movies, add_new_movie, delete_existing_movie, update_existing_movie
+import movie_storage_sql as storage
+import data_fetcher
 
 import random
 import datetime
@@ -58,7 +59,7 @@ def list_movies():
     """
     Lists all movies from the database with release year and rating.
     """
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     print(colorama.Style.BRIGHT + colorama.Fore.CYAN + f"{len(movie_dict)} movies in total")
     for movie in movie_dict:
         print(colorama.Fore.CYAN + f"{movie} ({movie_dict[movie]["year"]}): "
@@ -71,7 +72,7 @@ def add_movie():
     Accepts valid options as input and adds the new movie
     with accompanying information to the database.
     """
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     while True:
         new_movie = input(colorama.Fore.BLUE + "Enter new movie name: ")
         if not new_movie:
@@ -84,15 +85,19 @@ def add_movie():
     else:
         new_movie = check_for_similar_title(new_movie)
         if new_movie not in movie_dict:
-            new_year = get_valid_year()
-            new_rating = get_valid_rating()
-            add_new_movie(new_movie, new_year, new_rating)
-            print(colorama.Fore.CYAN + f"\nMovie '{new_movie}' from {new_year} "
-                                       f"(with rating {new_rating}) successfully added")
+            new_title, new_year, new_rating, new_poster_url = data_fetcher.fetch_data(new_movie)
+            if new_title is False:
+                return
+            if new_title is None:
+                print(colorama.Fore.RED + f"No movie '{new_movie}' found.")
+            else:
+                storage.add_new_movie(new_title, new_year, new_rating, new_poster_url)
+                print(colorama.Fore.CYAN + f"\nMovie '{new_title}' from {new_year} "
+                                           f"(with rating {new_rating}) successfully added")
 
 
 def check_for_similar_title(title_to_search_for):
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     similar_title = ""
     for movie in movie_dict:
         if title_to_search_for.lower() in movie.lower():
@@ -114,44 +119,12 @@ def check_for_similar_title(title_to_search_for):
         return title_to_search_for
 
 
-def get_valid_year():
-    while True:
-        try:
-            year = int(input(colorama.Fore.BLUE + "Enter new movie year: "))
-        except ValueError:
-            print(colorama.Fore.RED + "Please enter a valid year")
-            continue
-        current_year = datetime.date.today().year
-        if year < 1888:
-            print(colorama.Fore.RED +
-                  "Please enter a valid year (the first existing movie is from 1888)")
-        elif year > current_year:
-            print(colorama.Fore.RED +
-                  f"Please enter a valid year (it is currently the year {current_year})")
-        else:
-            return year
-
-
-def get_valid_rating():
-    while True:
-        try:
-            rating = float(input(colorama.Fore.BLUE +
-                                 "Enter new movie rating (1-10): "))
-        except ValueError:
-            print(colorama.Fore.RED + "Please enter a valid rating")
-            continue
-        if not 1 <= rating <= 10:
-            print(colorama.Fore.RED + "Please enter a valid rating")
-        else:
-            return rating
-
-
 def delete_movie():
     """
     Asks the user for a movie title to delete from the database.
     Deletes the movie, if the title was found.
     """
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     if not movie_dict:
         print(colorama.Style.BRIGHT + colorama.Fore.CYAN + "No movies in the database")
         return
@@ -159,7 +132,7 @@ def delete_movie():
     if movie_to_delete not in movie_dict:
         print(colorama.Fore.RED + f"Movie '{movie_to_delete}' doesn't exist")
     else:
-        delete_existing_movie(movie_to_delete)
+        storage.delete_existing_movie(movie_to_delete)
         print(colorama.Fore.CYAN + f"\nMovie '{movie_to_delete}' successfully deleted")
 
 
@@ -169,7 +142,7 @@ def update_movie():
     Accepts valid options as input.
     Updates the movie rating in the database, if the title was found.
     """
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     if not movie_dict:
         print(colorama.Style.BRIGHT + colorama.Fore.CYAN + "No movies in the database")
         return
@@ -184,8 +157,22 @@ def update_movie():
         print(colorama.Fore.RED + f"Movie '{movie_to_update}' doesn't exist")
     if movie_to_update in movie_dict:
         updated_rating = get_valid_rating()
-        update_existing_movie(movie_to_update, updated_rating)
+        storage.update_existing_movie(movie_to_update, updated_rating)
         print(colorama.Fore.CYAN + f"\nMovie '{movie_to_update}' successfully updated")
+
+
+def get_valid_rating():
+    while True:
+        try:
+            rating = float(input(colorama.Fore.BLUE +
+                                 "Enter new movie rating (1-10): "))
+        except ValueError:
+            print(colorama.Fore.RED + "Please enter a valid rating")
+            continue
+        if not 1 <= rating <= 10:
+            print(colorama.Fore.RED + "Please enter a valid rating")
+        else:
+            return rating
 
 
 def confirm_similar_title(similar_movie, movie_in_database):
@@ -207,7 +194,7 @@ def show_stats():
     Shows the average and median rating of all movies in the database
     and lists the best and worst movie(s).
     """
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     if not movie_dict:
         print(colorama.Style.BRIGHT + colorama.Fore.CYAN + "No movies in the database")
         return
@@ -243,7 +230,7 @@ def get_random_movie():
     Selects a random movie from all movies in the database.
     Prints it on the screen with release year and rating.
     """
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     if not movie_dict:
         print(colorama.Style.BRIGHT + colorama.Fore.CYAN + "No movies in the database")
         return
@@ -261,7 +248,7 @@ def search_for_movie():
     if the movie was found in the database.
     If a similar title was found, it prints this movie with accompanying information.
     """
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     if not movie_dict:
         print(colorama.Style.BRIGHT + colorama.Fore.CYAN + "No movies in the database")
         return
@@ -346,7 +333,7 @@ def list_movies_sorted_by_rating():
     Lists all movies from the database with accompanying information, sorted by rating.
     Shows the highest rated first.
     """
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     if not movie_dict:
         print(colorama.Style.BRIGHT + colorama.Fore.CYAN + "No movies in the database")
         return
@@ -364,7 +351,7 @@ def list_movies_sorted_by_year():
     Lists all movies from the database with accompanying information, sorted by release year.
     Shows the movies in the desired order.
     """
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     if not movie_dict:
         print(colorama.Style.BRIGHT + colorama.Fore.CYAN + "No movies in the database")
         return
@@ -394,7 +381,7 @@ def filter_movies():
     Accepts valid options as input and lists all movies from the database
     that meet the desired criteria.
     """
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     if not movie_dict:
         print(colorama.Style.BRIGHT + colorama.Fore.CYAN + "No movies in the database")
         return
@@ -487,7 +474,7 @@ def create_rating_histogram():
     """
     import matplotlib.pyplot as plt
 
-    movie_dict = get_movies()
+    movie_dict = storage.get_movies()
     if not movie_dict:
         print(colorama.Style.BRIGHT + colorama.Fore.CYAN + "No movies in the database")
         return

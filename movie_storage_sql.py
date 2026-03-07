@@ -13,7 +13,8 @@ with engine.connect() as connection:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT UNIQUE NOT NULL,
             year INTEGER NOT NULL,
-            rating REAL NOT NULL
+            rating REAL NOT NULL,
+            poster_image_url TEXT NOT NULL
         )
     """))
     connection.commit()
@@ -25,23 +26,25 @@ def get_movies():
     :return: a dictionary of dictionaries containing the information for each movie
     """
     with engine.connect() as connection:
-        result = connection.execute(text("SELECT title, year, rating FROM movies"))
+        result = connection.execute(text("SELECT title, year, rating, poster_image_url FROM movies"))
         movies = result.fetchall()
-    return {row[0]: {"year": row[1], "rating": row[2]} for row in movies}
+    return {row[0]: {"year": row[1], "rating": row[2], "movie_poster_url": row[3]} for row in movies}
+    # TODO: absichern gegen IndexError?
 
 
-def add_new_movie(title, year, rating):
+def add_new_movie(title, year, rating, poster_image_url):
     """
     Add a new movie to the database.
+    :param poster_image_url: URL to the movie poster
     :param title: new movie title
     :param year: new movie year
     :param rating: new movie rating
     """
     with engine.connect() as connection:
         try:
-            connection.execute(text("INSERT OR IGNORE INTO movies (title, year, rating) "
-                                             "VALUES (:title, :year, :rating)"),
-                               {"title": title, "year": year, "rating": rating})
+            connection.execute(text("INSERT OR IGNORE INTO movies (title, year, rating, poster_image_url) "
+                                    "VALUES (:title, :year, :rating, :poster_image_url)"),
+                               {"title": title, "year": year, "rating": rating, "poster_image_url": poster_image_url})
             connection.commit()
         except Exception as e:
             print(f"Error: {e}")
