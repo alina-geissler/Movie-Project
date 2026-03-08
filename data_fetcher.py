@@ -24,7 +24,24 @@ def fetch_data(movie_title):
     year = movie_info['Year']
     rating = movie_info['imdbRating']
     poster_image_url = movie_info['Poster']
-    return title, year, rating, poster_image_url
+    valid_poster_url = is_valid_poster_url(poster_image_url)
+
+    return title, year, rating, valid_poster_url
+
+
+def is_valid_poster_url(url):
+    if "http" not in url:
+        return "N/A"
+    else:
+        try:
+            res = requests.head(url)
+        except Exception:
+            return "N/A"
+        if res.status_code != 200:
+            return "N/A"
+        else:
+            return url
+
 
 
 

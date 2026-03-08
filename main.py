@@ -1,5 +1,6 @@
 import movie_storage_sql as storage
 import data_fetcher
+import web_generator
 
 import random
 import datetime
@@ -28,7 +29,8 @@ def show_menu():
           "8.\tMovies sorted by rating\n"
           "9.\tMovies sorted by year\n" 
           "10.\tFilter movies\n"                                        
-          "11.\tCreate rating histogram")
+          "11.\tCreate rating histogram\n"
+          "12.\tGenerate Website")
     print(colorama.Fore.BLACK + colorama.Back.GREEN + "---------------------------")
     print()
 
@@ -40,12 +42,12 @@ def get_choice_by_user():
     """
     while True:
         try:
-            user_choice = int(input(colorama.Fore.BLUE + "Enter choice (0-11): "))
+            user_choice = int(input(colorama.Fore.BLUE + "Enter choice (0-12): "))
         except ValueError:
             print(colorama.Style.BRIGHT + colorama.Fore.RED + "Invalid choice\n")
             show_menu()
             continue
-        if user_choice not in range(12):
+        if user_choice not in range(13):
             print(colorama.Style.BRIGHT + colorama.Fore.RED + "Invalid choice\n")
             show_menu()
         else:
@@ -119,6 +121,20 @@ def check_for_similar_title(title_to_search_for):
         return title_to_search_for
 
 
+def confirm_similar_title(similar_movie, movie_in_database):
+    print(colorama.Fore.RED + f"No movie '{similar_movie}' found.")
+    while True:
+        add_anyway = input(colorama.Fore.BLUE +
+                           f"\nDid you mean '{movie_in_database}' and want to update this movie? (Y/N): ").upper()
+        if add_anyway not in ("Y", "YES", "N", "NO"):
+            print(colorama.Fore.RED + "Please enter 'Y' or 'N'")
+        else:
+            if add_anyway in ("Y", "YES"):
+                return movie_in_database
+            else:
+                return similar_movie
+
+
 def delete_movie():
     """
     Asks the user for a movie title to delete from the database.
@@ -173,20 +189,6 @@ def get_valid_rating():
             print(colorama.Fore.RED + "Please enter a valid rating")
         else:
             return rating
-
-
-def confirm_similar_title(similar_movie, movie_in_database):
-    print(colorama.Fore.RED + f"No movie '{similar_movie}' found.")
-    while True:
-        add_anyway = input(colorama.Fore.BLUE +
-                           f"\nDid you mean '{movie_in_database}' and want to update this movie? (Y/N): ").upper()
-        if add_anyway not in ("Y", "YES", "N", "NO"):
-            print(colorama.Fore.RED + "Please enter 'Y' or 'N'")
-        else:
-            if add_anyway in ("Y", "YES"):
-                return movie_in_database
-            else:
-                return similar_movie
 
 
 def show_stats():
@@ -487,6 +489,7 @@ def create_rating_histogram():
     plt.ylabel("Number of movies")
     file_type = get_valid_file_type()
     plt.savefig(f'histogram_of_movie_ratings.{file_type}')
+    print(colorama.Fore.CYAN + f"\nHistogram successfully created and saved")
     while True:
         show_histogram = input(colorama.Fore.BLUE + "Show histogram? (Y/N): ").upper()
         if show_histogram not in ("Y", "YES", "N", "NO"):
@@ -510,6 +513,27 @@ def get_valid_file_type():
             return "jpg"
 
 
+def generate_website():
+    """
+
+    :return:
+    """
+    movie_dict = storage.get_movies()
+    if not movie_dict:
+        print(colorama.Style.BRIGHT + colorama.Fore.CYAN + "No movies in the database")
+        while True:
+            create_website = input(colorama.Fore.BLUE + "Generate website anyway? (Y/N): ").upper()
+            if create_website not in ("Y", "YES", "N", "NO"):
+                print(colorama.Fore.RED + "Please enter 'Y' or 'N'")
+            else:
+                break
+    if movie_dict or create_website in ("Y", "YES"):
+        web_generator.create_html_file(movie_dict)
+        print(colorama.Fore.CYAN + f"\nWebsite successfully generated")
+
+
+
+
 def main():
     """
     Main function:
@@ -517,7 +541,9 @@ def main():
     and carries out the desired tasks until the user exits the program.
     """
     print(colorama.Style.BRIGHT + colorama.Fore.GREEN +
-          "\n********** My Movie Database **********\n")
+          "\n********** CineStash **********")
+    print(colorama.Fore.GREEN +
+          "Your cureated movie treasure trove\n")
 
     dispatch = {
         1: list_movies,
@@ -530,7 +556,8 @@ def main():
         8: list_movies_sorted_by_rating,
         9: list_movies_sorted_by_year,
         10: filter_movies,
-        11: create_rating_histogram
+        11: create_rating_histogram,
+        12: generate_website
     }
 
     while True:
