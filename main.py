@@ -1,6 +1,6 @@
-import movie_storage_sql as storage
-import data_fetcher
-import web_generator
+import movie_storage.movie_storage_sql as storage
+import movie_fetch.data_fetcher as data_fetcher
+import movie_render.web_generator as web_generator
 
 import random
 import datetime
@@ -13,7 +13,7 @@ colorama.init(autoreset=True)
 
 def show_menu():
     """
-    Prints the menu on the screen.
+    Print the menu on the screen.
     """
     print(colorama.Fore.BLACK + colorama.Back.GREEN + "---------------------------")
     print(colorama.Style.BRIGHT + colorama.Fore.GREEN + "Menu:")
@@ -37,8 +37,8 @@ def show_menu():
 
 def get_choice_by_user():
     """
-    Asks the user for the desired menu item.
-    Accepts a valid choice as input and opens the corresponding function.
+    Ask the user for the desired menu item.
+    Accept a valid choice as input and open the corresponding function.
     """
     while True:
         try:
@@ -55,11 +55,11 @@ def get_choice_by_user():
             return user_choice
 
 
-# Functions for all the menu choices
+# Functions for all menu choices
 
 def list_movies():
     """
-    Lists all movies from the database with release year and rating.
+    List all movies from the database with release year and rating.
     """
     movie_dict = storage.get_movies()
     print(colorama.Style.BRIGHT + colorama.Fore.CYAN + f"{len(movie_dict)} movies in total")
@@ -70,9 +70,10 @@ def list_movies():
 
 def add_movie():
     """
-    Asks the user for a new movie title, related release year and rating.
-    Accepts valid options as input and adds the new movie
-    with accompanying information to the database.
+    Ask the user for a new movie title to add to the database.
+    Accept valid options as input and call function 'data_fetcher.fetch_data' to get year, IMDb rating
+    and URL to the movie poster.
+    Call function 'storage.add_new_movie' to add the new movie with accompanying information to the database.
     """
     movie_dict = storage.get_movies()
     while True:
@@ -99,6 +100,11 @@ def add_movie():
 
 
 def check_for_similar_title(title_to_search_for):
+    """
+    Check if the same title with different upper and lower case already exists in the database.
+    :param title_to_search_for: movie user wants to add to the database
+    :return: similar title if found, otherwise initial user input
+    """
     movie_dict = storage.get_movies()
     similar_title = ""
     for movie in movie_dict:
@@ -121,24 +127,10 @@ def check_for_similar_title(title_to_search_for):
         return title_to_search_for
 
 
-def confirm_similar_title(similar_movie, movie_in_database):
-    print(colorama.Fore.RED + f"No movie '{similar_movie}' found.")
-    while True:
-        add_anyway = input(colorama.Fore.BLUE +
-                           f"\nDid you mean '{movie_in_database}' and want to update this movie? (Y/N): ").upper()
-        if add_anyway not in ("Y", "YES", "N", "NO"):
-            print(colorama.Fore.RED + "Please enter 'Y' or 'N'")
-        else:
-            if add_anyway in ("Y", "YES"):
-                return movie_in_database
-            else:
-                return similar_movie
-
-
 def delete_movie():
     """
-    Asks the user for a movie title to delete from the database.
-    Deletes the movie, if the title was found.
+    Ask the user for a movie title to delete from the database.
+    Call function storage.delete_existing_movie to delete the movie if title was found.
     """
     movie_dict = storage.get_movies()
     if not movie_dict:
@@ -154,9 +146,10 @@ def delete_movie():
 
 def update_movie():
     """
-    Asks the user for a movie title to update and the updated rating.
-    Accepts valid options as input.
-    Updates the movie rating in the database, if the title was found.
+    Ask the user for a movie title to update and the updated rating.
+    Accept valid options as input.
+    Call function confirm_similar_title if a movie with different upper and lower case is in the database.
+    Call function storage.delete_existing_movie to updates the movie rating in the database if title was found.
     """
     movie_dict = storage.get_movies()
     if not movie_dict:
@@ -177,7 +170,31 @@ def update_movie():
         print(colorama.Fore.CYAN + f"\nMovie '{movie_to_update}' successfully updated")
 
 
+def confirm_similar_title(similar_movie, movie_in_database):
+    """
+
+    :param similar_movie: movie title user entered
+    :param movie_in_database: same movie as similar_movie but different upper and lower case
+    :return: movie in database if user wants to update this movie, otherwise initial user input
+    """
+    print(colorama.Fore.RED + f"No movie '{similar_movie}' found.")
+    while True:
+        add_anyway = input(colorama.Fore.BLUE +
+                           f"Did you mean '{movie_in_database}' and want to update this movie? (Y/N): ").upper()
+        if add_anyway not in ("Y", "YES", "N", "NO"):
+            print(colorama.Fore.RED + "Please enter 'Y' or 'N'")
+        else:
+            if add_anyway in ("Y", "YES"):
+                return movie_in_database
+            else:
+                return similar_movie
+
+
 def get_valid_rating():
+    """
+    Prompt user for new movie rating, accept valid options.
+    :return: rating to update in the database
+    """
     while True:
         try:
             rating = float(input(colorama.Fore.BLUE +
@@ -193,8 +210,8 @@ def get_valid_rating():
 
 def show_stats():
     """
-    Shows the average and median rating of all movies in the database
-    and lists the best and worst movie(s).
+    Show the average and median rating of all movies in the database
+    and list the best and worst movie(s).
     """
     movie_dict = storage.get_movies()
     if not movie_dict:
@@ -229,8 +246,8 @@ def show_stats():
 
 def get_random_movie():
     """
-    Selects a random movie from all movies in the database.
-    Prints it on the screen with release year and rating.
+    Select a random movie from all movies in the database.
+    Print it on the screen with release year and rating.
     """
     movie_dict = storage.get_movies()
     if not movie_dict:
@@ -245,10 +262,9 @@ def get_random_movie():
 
 def search_for_movie():
     """
-    Asks the user for part of a movie title.
-    Prints it on the screen with release year and rating
-    if the movie was found in the database.
-    If a similar title was found, it prints this movie with accompanying information.
+    Ask the user for part of a movie title.
+    Print it on the screen with release year and rating if movie was found in the database.
+    If a similar title was found, print this movie with accompanying information.
     """
     movie_dict = storage.get_movies()
     if not movie_dict:
@@ -278,7 +294,7 @@ def search_for_movie():
 
 def clean_title_for_checking_similarity(movie_title):
     """
-    Removes the articles from a movie title to compare it with the search term
+    Remove the articles from a movie title to compare it with the search term
     provided by the user.
     :param movie_title: movie title to clean
     :return: important words of the movie title
@@ -292,7 +308,7 @@ def clean_title_for_checking_similarity(movie_title):
 
 def check_terms_for_similarity(words, words_to_compare_with):
     """
-    Checks whether two terms are similar.
+    Check whether two terms are similar.
     :param words: a list of words from the first term
     :param words_to_compare_with: a list of words from the second term
     :return: whether the terms are similar
@@ -307,7 +323,7 @@ def check_terms_for_similarity(words, words_to_compare_with):
 
 def calc_edit_distance(string_1, string_2):
     """
-    Calculates the editing distance between two strings.
+    Calculate the editing distance between two strings.
     :param string_1: any string
     :param string_2: second string to compare with first one
     :return: the editing distance
@@ -332,8 +348,8 @@ def calc_edit_distance(string_1, string_2):
 
 def list_movies_sorted_by_rating():
     """
-    Lists all movies from the database with accompanying information, sorted by rating.
-    Shows the highest rated first.
+    List all movies from the database with accompanying information, sorted by rating.
+    Show the highest rated first.
     """
     movie_dict = storage.get_movies()
     if not movie_dict:
@@ -348,10 +364,10 @@ def list_movies_sorted_by_rating():
 
 def list_movies_sorted_by_year():
     """
-    Asks the user whether the latest movie should be displayed first.
-    Accepts valid options as input.
-    Lists all movies from the database with accompanying information, sorted by release year.
-    Shows the movies in the desired order.
+    Ask the user whether the latest movie should be displayed first.
+    Accept valid options as input.
+    List all movies from the database with accompanying information, sorted by release year.
+    Show the movies in the desired order.
     """
     movie_dict = storage.get_movies()
     if not movie_dict:
@@ -377,10 +393,10 @@ def list_movies_sorted_by_year():
 
 def filter_movies():
     """
-    Asks the user for their desired filter criteria.
+    Ask the user for their desired filter criteria.
     A minimum rating, a start year and an end year can be specified.
     All three are optional.
-    Accepts valid options as input and lists all movies from the database
+    Call functions for each criterion to prompt user and list all movies from the database
     that meet the desired criteria.
     """
     movie_dict = storage.get_movies()
@@ -406,6 +422,11 @@ def filter_movies():
 
 
 def get_min_rating():
+    """
+    Prompt user for minimum rating to filter the movies accordingly.
+    Accept valid options or no input for no minimum rating.
+    :return: user input or 1 if no minimum rating has been entered
+    """
     while True:
         min_rating = input(colorama.Fore.BLUE +
                            "Enter minimum rating (leave blank for no minimum rating): ")
@@ -424,6 +445,12 @@ def get_min_rating():
 
 
 def get_start_year(current_year):
+    """
+    Prompt user for start year to filter the movies accordingly.
+    Accept valid options or no input for no start year.
+    :param current_year: current year to validate input
+    :return: user input or 1888 if no start year has been entered
+    """
     while True:
         start_year = input(colorama.Fore.BLUE +
                            "Enter start year (leave blank for no start year): ")
@@ -447,6 +474,13 @@ def get_start_year(current_year):
 
 
 def get_end_year(current_year, start_year):
+    """
+    Prompt user for end year to filter the movies accordingly.
+    Accept valid options or no input for no end year.
+    :param current_year: current year to validate input
+    :param start_year: chosen start year to validate input
+    :return: user input or current year if no end year has been entered
+    """
     while True:
         end_year = input(colorama.Fore.BLUE + "Enter end year (leave blank for no end year): ")
         if end_year == "":
@@ -470,9 +504,9 @@ def get_end_year(current_year, start_year):
 
 def create_rating_histogram():
     """
-    Creates a rating histogram with the ratings of all movies from the database.
-    Asks the user how it should be saved and saves it in the desired manner.
-    Asks the user whether the histogram should be displayed and does so depending on the answer.
+    Create a rating histogram with the ratings of all movies in the database.
+    Call a function to ask the user how it should be saved and save it in the desired manner.
+    Ask the user whether the histogram should be displayed and do so depending on the answer.
     """
     import matplotlib.pyplot as plt
 
@@ -480,7 +514,6 @@ def create_rating_histogram():
     if not movie_dict:
         print(colorama.Style.BRIGHT + colorama.Fore.CYAN + "No movies in the database")
         return
-
     ratings = [movie_dict[movie]["rating"] for movie in movie_dict]
     plt.hist(ratings, bins=list(range(0, 11)))
     plt.hist(ratings, bins=list(range(0, 11)), edgecolor='black')
@@ -501,6 +534,11 @@ def create_rating_histogram():
 
 
 def get_valid_file_type():
+    """
+    Prompt user for file type to save the rating histogram accordingly.
+    Accept valid options.
+    :return: desired file type
+    """
     while True:
         file_type = input(colorama.Fore.BLUE + "Save file as (PNG / PDF / JPEG): ").upper()
         if file_type not in ("PNG", "PDF", "JPEG", "JPG"):
@@ -515,8 +553,8 @@ def get_valid_file_type():
 
 def generate_website():
     """
-
-    :return:
+    Call function to create HTML file showcasing the movies in the database.
+    If database is empty, ask user if website should be generated anyway.
     """
     movie_dict = storage.get_movies()
     if not movie_dict:
@@ -532,14 +570,13 @@ def generate_website():
         print(colorama.Fore.CYAN + f"\nWebsite successfully generated")
 
 
-
-
 def main():
     """
     Main function:
     Welcomes the user. Then calls up the menu, asks the user for their choice
     and carries out the desired tasks until the user exits the program.
     """
+    storage.create_table()
     print(colorama.Style.BRIGHT + colorama.Fore.GREEN +
           "\n********** CineStash **********")
     print(colorama.Fore.GREEN +
