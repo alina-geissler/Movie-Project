@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, text
+import colorama
 
 DB_URL = "sqlite:///data/movies.db"
 
@@ -29,8 +30,11 @@ def get_movies():
     :return: a dictionary of dictionaries containing the information for each movie
     """
     with engine.connect() as connection:
-        result = connection.execute(text("SELECT title, year, rating, poster_image_url FROM movies"))
-        movies = result.fetchall()
+        try:
+            result = connection.execute(text("SELECT title, year, rating, poster_image_url FROM movies"))
+            movies = result.fetchall()
+        except Exception as e:
+            print(colorama.Fore.RED + f"Error: {e}")
     return {row[0]: {"year": row[1], "rating": row[2], "movie_poster_url": row[3]} for row in movies}
 
 
@@ -49,7 +53,7 @@ def add_new_movie(title, year, rating, poster_image_url):
                                {"title": title, "year": year, "rating": rating, "poster_image_url": poster_image_url})
             connection.commit()
         except Exception as e:
-            print(f"Error: {e}")
+            print(colorama.Fore.RED + f"Error: {e}")
 
 
 def delete_existing_movie(title):
@@ -62,7 +66,7 @@ def delete_existing_movie(title):
             connection.execute(text("DELETE FROM movies WHERE title = :title"), {"title": title})
             connection.commit()
         except Exception as e:
-            print(f"Error: {e}")
+            print(colorama.Fore.RED + f"Error: {e}")
 
 
 def update_existing_movie(title, rating):
@@ -77,4 +81,4 @@ def update_existing_movie(title, rating):
                                         {"title": title, "rating": rating})
             connection.commit()
         except Exception as e:
-            print(f"Error: {e}")
+            print(colorama.Fore.RED + f"Error: {e}")

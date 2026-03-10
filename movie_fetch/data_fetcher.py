@@ -1,6 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
+import colorama
 
 load_dotenv()
 
@@ -18,7 +19,7 @@ def fetch_data(movie_title):
     try:
         res = requests.get(REQUEST_DATA_URL + f'{movie_title}')
     except Exception as e:
-        print("*** API is not accessible ***\nError: ", e)
+        print(colorama.Fore.RED + "*** API is not accessible ***\nError: ", e)
         return False, False, False, False
     movie_info = res.json()
     if movie_info.get("Error") == "Movie not found!":
