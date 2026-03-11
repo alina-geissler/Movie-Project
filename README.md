@@ -37,6 +37,7 @@ Movie-Project/
 ├── main.py
 ├── README.md
 ├── requirements.txt
+├── .env
 └── index.html           # generated website 
 ```
 
