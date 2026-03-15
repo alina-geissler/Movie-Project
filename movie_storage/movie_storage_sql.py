@@ -4,7 +4,7 @@ import colorama
 DB_URL = "sqlite:///data/movies.db"
 
 # Create the engine
-engine = create_engine(DB_URL)#, echo=True)
+engine = create_engine(DB_URL)
 
 
 def create_table():
